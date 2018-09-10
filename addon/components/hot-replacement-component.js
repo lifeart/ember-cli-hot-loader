@@ -12,6 +12,32 @@ function regexEscape(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // eslint-disable-line
 }
 
+let TemplatesCache = {};
+
+function hashString(str) {
+
+    var hash = 0;
+    if (str.length == 0) {
+        return hash;
+    }
+    for (var i = 0; i < str.length; i++) {
+        var char = str.charCodeAt(i);
+        hash = ((hash<<5)-hash)+char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return String(hash);
+    
+}
+
+function checkTemplatesCacheLimit() {
+    // allow only 10k component templates in cache
+    setTimeout(()=>{
+        if (Object.keys(TemplatesCache).length > 10000) {
+            TemplatesCache = {};
+        }
+    }, 1000);
+}
+
 export function matchesPodConvention (componentName, modulePath) {
   var basePath = 'components/' + componentName;
   var componentRegexp = new RegExp(regexEscape(basePath + '/component.js') + '$');
@@ -73,7 +99,7 @@ const HotReplacementComponent = Component.extend(HotComponentMixin, {
     const attributesMap = Object.keys(attrs)
       .filter(key => positionalParams.indexOf(key) === -1)
       .map(key =>`${key}=${key}`).join(' ');
-    return Ember.HTMLBars.compile(`
+    const templateLayout = `
       {{#if hasBlock}}
         {{#if (hasBlock "inverse")}}
           {{#component wrappedComponentName ${positionalParams} ${attributesMap} target=target as |a b c d e f g h i j k|}}
@@ -89,7 +115,13 @@ const HotReplacementComponent = Component.extend(HotComponentMixin, {
       {{else}}
         {{component wrappedComponentName ${positionalParams} ${attributesMap} target=target}}
       {{/if}}
-    `);
+    `;
+    const templateHash = hashString(templateLayout);
+    if (!TemplatesCache[templateHash]) {
+        TemplatesCache[templateHash] = Ember.HTMLBars.compile(templateLayout); 
+    }
+    checkTemplatesCacheLimit();
+    return TemplatesCache[templateHash];
   }).volatile(),
 
   __willLiveReload (event) {
