@@ -12,7 +12,11 @@ function regexEscape(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // eslint-disable-line
 }
 
-let TemplatesCache = {};
+
+const TEMPLATE_CACHE_MAX_SIZE = 10000;
+const TEMPLATE_CACHE_GC_TIMEOUT = 1000;
+var TemplatesCache = {};
+var TemplateCacheCheckTimeout = null;
 
 function hashString(str) {
 
@@ -26,16 +30,17 @@ function hashString(str) {
         hash = hash & hash; // Convert to 32bit integer
     }
     return String(hash);
-    
+
 }
 
 function checkTemplatesCacheLimit() {
     // allow only 10k component templates in cache
-    setTimeout(()=>{
-        if (Object.keys(TemplatesCache).length > 10000) {
+    clearTimeout(TemplateCacheCheckTimeout);
+    TemplateCacheCheckTimeout = setTimeout(()=>{
+        if (Object.keys(TemplatesCache).length > TEMPLATE_CACHE_MAX_SIZE) {
             TemplatesCache = {};
         }
-    }, 1000);
+    }, TEMPLATE_CACHE_GC_TIMEOUT);
 }
 
 export function matchesPodConvention (componentName, modulePath) {
