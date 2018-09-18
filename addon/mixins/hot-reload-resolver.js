@@ -35,12 +35,12 @@ export default Mixin.create({
   },
   resolveOther(parsedName) {
     captureTemplateOptions(parsedName);
+    const resolved = this._super(...arguments);
     const templateMatchRegex = get(this, 'originalTemplateMatchRegex');
     if (parsedName.type === 'template' && shouldIgnoreTemplate(parsedName, templateMatchRegex)) {
-      return;
+        return resolved;
     }
 
-    const resolved = this._super(...arguments);
     if (parsedName.type === 'component') {
       if (this.shouldExcludeComponent(parsedName)) {
         return this._super(parsedName);
