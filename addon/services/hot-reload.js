@@ -1,5 +1,6 @@
 import Service from '@ember/service';
 import Evented from '@ember/object/evented';
+import config from 'ember-get-config';
 
 /**
   The `willLiveReload` event is fired when we have any JS or HBS changes
@@ -59,5 +60,24 @@ import Evented from '@ember/object/evented';
   @public
 */
 
-
-export default Service.extend(Evented);
+export default Service.extend(Evented, {
+  tagNameForComponent(baseComponentName) {
+    return this._defaultTagNameForComponent(baseComponentName);
+  },
+  _htmlTagNameForComponentByName(baseComponentName) {
+    return baseComponentName.replace(/\//gi,'--');
+  },
+  _defaultTagNameForComponent(baseComponentName) {
+    const configuration = config['ember-cli-hot-loader'];
+    const tagless = configuration && configuration['tagless'];
+    const namedTags = configuration && configuration['named-tags'];
+    if (tagless) {
+      return '';
+    }
+    if (namedTags) {
+      return this._htmlTagNameForComponentByName(baseComponentName);
+    } else {
+      return 'div';
+    }
+  }
+});
