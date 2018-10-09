@@ -5,5 +5,8 @@ export default Component.extend({
   classNames: ['slashed-pod__js-only'],
   didRender() {
     this.element.innerHTML = '<button>JS-only component</button>';
+  },
+  click() {
+    console.log('slashed-pod/js-only'); // eslint-disable-line
   }
 });

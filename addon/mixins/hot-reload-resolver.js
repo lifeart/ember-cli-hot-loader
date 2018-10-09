@@ -33,13 +33,45 @@ export default Mixin.create({
       return false;
     }
   },
+  _isSlashedComponent({name}) {
+    return name.replace('components/', '').indexOf('/') > - 1;
+  },
+  _parsedComponentNameFromTemplate(parsedName) {
+    const componentFullName = `component:${parsedName.fullNameWithoutType}`;
+    const componentParsedName = this.parseName(componentFullName.replace('component:components/','component:'));
+    return componentParsedName;
+  },
   resolveOther(parsedName) {
     captureTemplateOptions(parsedName);
     const templateMatchRegex = get(this, 'originalTemplateMatchRegex');
     const resolved = this._super(...arguments);
 
     if (parsedName.type === 'template' && shouldIgnoreTemplate(parsedName, templateMatchRegex)) {
-      return resolved;
+      // default behaviour is return undefined.
+      if (!resolved) {
+        return;
+      }
+      
+      // if component not slashed, continue default behaviour
+      if (!this._isSlashedComponent(parsedName)) {
+        return;
+      }
+
+      // if we can find component for tempate, force default behaviour else return resolved template
+      // failed components without this logic: (unable to find action)
+      // looks like it's because components has manually resolved layout property
+      // slashed/mixed-classic
+      // slashed-podded/mixed-classic
+      // use "Check buttons" button in application template to check regression
+      const componentForTemplate = this._super(this._parsedComponentNameFromTemplate(parsedName));
+      if (componentForTemplate) {
+        return;
+      }
+
+      // this line allow exclude slashed components without side-effects
+      if (this.shouldExcludeComponent(parsedName)) {
+        return resolved;
+      }
     }
     
     if (parsedName.type === 'component') {
@@ -65,7 +97,6 @@ export default Mixin.create({
     if (shouldIgnoreTemplate(parsedName, templateMatchRegex)) {
       return;
     }
-
     removeOriginalFromParsedName(parsedName, templateMatchRegex);
     return this._super(...arguments);
   },

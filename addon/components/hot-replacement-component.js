@@ -107,6 +107,7 @@ const HotReplacementComponent = Component.extend(HotComponentMixin, {
     const attributesMap = Object.keys(attrs)
       .filter(key => positionalParams.indexOf(key) === -1)
       .map(key =>`${key}=${key}`).join(' ');
+      
     const templateLayout = `
       {{#if hasBlock}}
         {{#if (hasBlock "inverse")}}
@@ -126,7 +127,7 @@ const HotReplacementComponent = Component.extend(HotComponentMixin, {
     `;
     const templateHash = hashString(templateLayout);
     if (!TemplatesCache[templateHash]) {
-        TemplatesCache[templateHash] = Ember.HTMLBars.compile(templateLayout); 
+      TemplatesCache[templateHash] = Ember.HTMLBars.compile(templateLayout); 
     }
     checkTemplatesCacheLimit();
     return TemplatesCache[templateHash];
@@ -151,7 +152,7 @@ const HotReplacementComponent = Component.extend(HotComponentMixin, {
           clearCache(this, wrappedComponentName);
           this.setProperties({
             wrappedComponentName: undefined,
-            baseComponentName: undefined
+            baseComponentName: undefined,
           });
           this.rerender();
           later(() => {
