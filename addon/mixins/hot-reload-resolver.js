@@ -51,7 +51,7 @@ export default Mixin.create({
       if (!resolved) {
         return;
       }
-      
+
       // if component not slashed, continue default behaviour
       if (!this._isSlashedComponent(parsedName)) {
         return;
@@ -59,17 +59,13 @@ export default Mixin.create({
 
       // if we can find component for tempate, force default behaviour else return resolved template
       // failed components without this logic: (unable to find action)
-      // looks like it's because components has manually resolved layout property
       // slashed/mixed-classic
       // slashed-podded/mixed-classic
       // use "Check buttons" button in application template to check regression
       const componentForTemplate = this._super(this._parsedComponentNameFromTemplate(parsedName));
       if (componentForTemplate) {
         return;
-      }
-
-      // this line allow exclude slashed components without side-effects
-      if (this.shouldExcludeComponent(parsedName)) {
+      } else {
         return resolved;
       }
     }

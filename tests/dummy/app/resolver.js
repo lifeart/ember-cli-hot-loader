@@ -5,7 +5,7 @@ import Mixin from '@ember/object/mixin';
 const CustomHotReloadMixin = Mixin.create(HotReloadMixin, {
   shouldExcludeComponent({name}) {
     const excludedFromConfig = this._super(...arguments);
-    const isSlashedComponent = name.startsWith('excluded-slashed');
+    const isSlashedComponent = name.includes('excluded-slashed');
     return excludedFromConfig || isSlashedComponent;
   }
 });
