@@ -11,7 +11,7 @@ const TEMPLATE_MATCH_REGEX = new RegExp(/-original$/);
 function removeOriginalFromParsedName (parsedName, pattern) {
   parsedName.fullName = parsedName.fullName.replace(pattern, '');
   parsedName.fullNameWithoutType = parsedName.fullNameWithoutType.replace(pattern, '');
-  parsedName.name= parsedName.name.replace(pattern, '');
+  parsedName.name = parsedName.name.replace(pattern, '');
 }
 
 function shouldIgnoreTemplate (parsedName, pattern) {
@@ -33,17 +33,46 @@ export default Mixin.create({
       return false;
     }
   },
+  _isSlashedComponent({name}) {
+    return name.replace('components/', '').indexOf('/') > - 1;
+  },
+  _parsedComponentNameFromTemplate(parsedName) {
+    const componentFullName = `component:${parsedName.fullNameWithoutType}`;
+    const componentParsedName = this.parseName(componentFullName.replace('component:components/','component:'));
+    return componentParsedName;
+  },
   resolveOther(parsedName) {
     captureTemplateOptions(parsedName);
     const templateMatchRegex = get(this, 'originalTemplateMatchRegex');
-    if (parsedName.type === 'template' && shouldIgnoreTemplate(parsedName, templateMatchRegex)) {
-      return;
-    }
-
     const resolved = this._super(...arguments);
+
+    if (parsedName.type === 'template' && shouldIgnoreTemplate(parsedName, templateMatchRegex)) {
+      // default behaviour is return undefined.
+      if (!resolved) {
+        return;
+      }
+
+      // if component not slashed, continue default behaviour
+      if (!this._isSlashedComponent(parsedName)) {
+        return;
+      }
+
+      // if we can find component for tempate, force default behaviour else return resolved template
+      // failed components without this logic: (unable to find action)
+      // slashed/mixed-classic
+      // slashed-podded/mixed-classic
+      // use "Check buttons" button in application template to check regression
+      const componentForTemplate = this._super(this._parsedComponentNameFromTemplate(parsedName));
+      if (componentForTemplate) {
+        return;
+      } else {
+        return resolved;
+      }
+    }
+    
     if (parsedName.type === 'component') {
       if (this.shouldExcludeComponent(parsedName)) {
-        return this._super(parsedName);
+        return resolved;
       }
       if (resolved) {
         return this._resolveComponent(resolved, parsedName);
@@ -64,7 +93,6 @@ export default Mixin.create({
     if (shouldIgnoreTemplate(parsedName, templateMatchRegex)) {
       return;
     }
-
     removeOriginalFromParsedName(parsedName, templateMatchRegex);
     return this._super(...arguments);
   },
